@@ -19,16 +19,12 @@ def one_hot_vector(y):
     return y_out
 
 def read(path):
-    x_train_temp, y_train_temp = choose(path,"train")
+    x_train, y_train = choose(path,"train")
     x_test, y_test = choose(path,"test")
 
-    x_train = np.array(x_train_temp[:int(len(x_train_temp)*0.8)])
-    y_train = np.array(y_train_temp[:int(len(y_train_temp)*0.8)])
-    x_validation = np.array(x_train_temp[int(len(x_train_temp)*0.8):])
-    y_validation = np.array(y_train_temp[int(len(y_train_temp)*0.8):])
+    x_train = np.array(x_train)
+    y_train = np.array(y_train)
     x_test = np.array(x_test)
     y_test = np.array(y_test)
 
-    return x_train, y_train, x_validation, y_validation, x_test, y_test
-
-# TODO refactor
+    return x_train, y_train, x_test, y_test
