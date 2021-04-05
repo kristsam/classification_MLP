@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import random
 
 def choose(path,text):
     x = []
@@ -18,8 +19,26 @@ def one_hot_vector(y):
         y_out[i][y[i]] = 1
     return y_out
 
+def rearrange(x, y):
+    x1, x2, x3 = [], [], []
+    y1, y2, y3 = [], [], []
+    for i in range(0,len(x)):
+        r = random.random()
+        if r < 0.33:
+            x1.append(x[i])
+            y1.append(y[i])
+        elif r < 0.66:
+            x2.append(x[i])
+            y2.append(y[i])
+        else:
+            x3.append(x[i])
+            y3.append(y[i])
+    return x1+x2+x3, y1+y2+y3
+
 def read(path):
     x_train, y_train = choose(path,"train")
+    x_train, y_train = rearrange(x_train, y_train)
+
     x_test, y_test = choose(path,"test")
 
     x_train = np.array(x_train)
