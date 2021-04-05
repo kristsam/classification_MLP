@@ -1,2 +1,4 @@
 data/
+diagrams/**
+!diagrams/.gitkeep
 **/__pycache__/
