@@ -60,7 +60,7 @@ class MultiLayerPerceptron:
 
         for i in range(0, len(learning_rate)):
             for j in range(0,len(lam)):
-                plt.subplot(len(learning_rate), len(lam), j*len(lam) + j+1)
+                plt.subplot(len(learning_rate), len(lam), i*len(lam) + j+1)
                 plt.plot(error_in_epochs_list[i, j, :, 0]+1,error_in_epochs_list[i, j, :, 1], label="training data")
                 plt.plot(error_in_epochs_list[i, j, :, 0]+1,error_in_epochs_list[i, j, :, 2], label="validation data")
                 plt.ylabel('error')
