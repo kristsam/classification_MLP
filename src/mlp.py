@@ -2,6 +2,7 @@ import math
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
+import func as fc
 
 class MultiLayerPerceptron:
 
@@ -14,11 +15,11 @@ class MultiLayerPerceptron:
 
     def __choose_func(self, activation):
         if activation == self.VALID_FUNCTIONS[0]:
-            h = h1_act
+            h = fc.h1_act
         elif activation == self.VALID_FUNCTIONS[1]:
-            h = h2_act
+            h = fc.h2_act
         elif activation== self.VALID_FUNCTIONS[2]: 
-            h = h3_act
+            h = fc.h3_act
         else: 
             if activation not in self.VALID_FUNCTIONS:
                 raise ValueError("results: activation function must be one of %r." % self.VALID_FUNCTIONS)
@@ -38,15 +39,16 @@ class MultiLayerPerceptron:
         self.M.append(m)
         self.h.append(self.__choose_func(activation))
 
-    def compile(self, learning_rate=[0.01], l=[0.01]):
+    def compile(self, learning_rate=[0.01], lam=[0.01], initializer='glorot'):
         if isinstance(learning_rate, list):
               self.learning_rate = learning_rate
         elif isinstance(learning_rate, int):
               self.learning_rate = [learning_rate]
-        if isinstance(l, list):
-             self.lam = l
-        elif isinstance(l, int):
-             self.lam = [l]
+        if isinstance(lam, list):
+             self.lam = lam
+        elif isinstance(lam, int):
+             self.lam = [lam]
+        self.initializer = choose_initializer(initializer)
 
     def __split(self, x, validation_split):
         split_rows = int(x.shape[0]* (1-validation_split))
@@ -85,14 +87,16 @@ class MultiLayerPerceptron:
             z[0][0] = 1
             for j in range(1,self.M+1):
                 z[j][0] = h(np.dot(np.transpose(w1[j-1]), x_new[i]))
-            for k in range(0,self.K):
-                y[i][k] = softmax(k, w2, z)
+            _o = np.reshape(np.dot(w2,z), newshape=(1,self.K))
+            y[i] = fc.softmax(_o, ax=1)
+
         return y
 
     def score(self, y, t):
         count = 0
         for i in range(0,t.shape[0]):
             index_max = 0
+            index_max2 = np.argmax(y[i])
             for j in range(0,t.shape[1]):
                 if y[i][index_max] < y[i][j]:
                     index_max = j
@@ -108,8 +112,8 @@ class MultiLayerPerceptron:
         epoch_best = -1
         learning_rate_best = -1
         lam_best = -1
-        w1_best = 0.01*np.random.rand(M, D+1) + 0.001
-        w2_best = 0.01*np.random.rand(K, M+1) + 0.001
+        w1_best = self.initializer(M,D+1)
+        w2_best = self.initializer(K,M+1)
 
         y_out = np.empty(shape=(Nb,K))
         z = np.empty(shape=(Nb, M+1))
@@ -117,10 +121,11 @@ class MultiLayerPerceptron:
         error_in_epochs_list = np.empty(shape=(len(learning_rate), len(lam), epochs, 3))
         for lr in range(0,len(learning_rate)):
             for l in range(0,len(lam)):
-                w1 = 0.01*np.random.rand(M, D+1) + 0.001
-                w2 = 0.01*np.random.rand(K, M+1) + 0.001
+                w1 = self.initializer(M,D+1)
+                w2 = self.initializer(K,M+1)
                 for epoch in range(0,epochs):
-                    for num1 in range(0, int(N/Nb)+1, Nb):
+                    print("Running epoch "+str(epoch+1)+" out of "+str(epochs)+" for learning rate="+str(learning_rate[lr])+", lam="+str(lam[l])+"...")
+                    for num1 in range(0, N, Nb):
                         # each batch
                         for num2 in range(0, Nb):
                             n = num1 + num2
@@ -128,13 +133,14 @@ class MultiLayerPerceptron:
                             for j in range(1,M+1):
                                 mult = np.dot(np.transpose(w1[j-1]), self.x_train[n])
                                 z[num2][j] = h(mult)
+                            
+                            _o = np.dot(w2,z[num2])
+                            y_out[num2] = fc.softmax(_o, ax=0)
 
-                            for k in range(0,self.K):
-                                y_out[num2][k] = softmax(k, w2, z[num2])
-
-                        cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,lam[l])
-                        w2 = w2 - learning_rate[lr]*gradient_w2
-                        w1 = w1 #- learning_rate[lr]*gradient_w1
+                        cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],lam[l])
+                        print("cost="+str(cost))
+                        w2 += learning_rate[lr]*gradient_w2
+                        w1 += learning_rate[lr]*gradient_w1
 
                     # predict and return error
                     predictions_training = self.predict(self.x_train, w1, w2, h, fixed=True)
@@ -158,7 +164,7 @@ class MultiLayerPerceptron:
         return w1_best, w2_best, learning_rate_best, lam_best
 
     def fit(self, x, y, batch_size, epochs, validation_split=0.2, report=None):
-        self.x_train, self.x_validation = self.__split(x, validation_split)
+        self.x_train, self.x_validation = self.__split(x/255, validation_split) #normalize x by dividing with 255
         self.y_train, self.y_validation = self.__split(y, validation_split)
         self.N = self.x_train.shape[0]
         self.D = self.x_train.shape[1]
@@ -177,54 +183,36 @@ class MultiLayerPerceptron:
         print("y training set shape =", self.y_train.shape)
 
 
-def cost_gradient(t, y, w1, w2, z, l):
-    K = y.shape[0]
-    N = y.shape[1]
-    cost1 = 0
-    for k in range(0,y.shape[1]):
-        for n in range(0,y.shape[0]):
-            cost1 += t[n][k]*np.log(y[n][k]) - l/2*np.linalg.norm(w2)**2
-    cost = np.sum(np.dot(np.transpose(t),np.log(y)) - l/2*np.linalg.norm(w2)**2)
+def cost_gradient(t, y, w1, w2, z, x, l):
+    N = y.shape[0]
+    K = y.shape[1]
+    cost = 0
+    for n in range(0,N):
+        for k in range(0,K):
+            ynk  = y[n][k] #np.where(y[n][k] > 1.0e-10, y[n][k], 1.0e-10)
+            cost += t[n][k]*np.log(ynk)
+    cost -= l/2*np.sum(np.square(w2))
+    temp_w1 = np.insert(w1, 0, 1, axis=0)
     gradient_w2 = np.dot(np.transpose(t - y),z) - l*w2
     # TODO calc gradient for W1
-    gradient_w1 = 0
+    gradient_w1 = np.dot((t-y),w2)
+    # h3
+    gradient_w1 = np.dot(np.dot(np.dot((t-y),w2),-np.sin(np.dot(temp_w1,x.T))), x)
     return cost, gradient_w1, gradient_w2
 
-def h1_act(a):
-    h = math.log(1+math.exp(a))
-    h = 100 + math.log(math.exp(-100)+ math.exp(a-100))
-    return h
+def glorot(fin, fout):
+    x = math.sqrt(6/(fin+fout))
+    w = np.empty(shape=(fin,fout))
+    for i in range(0,w.shape[0]):
+        for j in range(0,w.shape[1]):
+            w[i][j] = np.random.uniform(-x,x)
+    return w
 
-def h1_act_derivative(a):
-    return math.exp(a)/(1+math.exp(a))
-
-def h2_act(a):
-    return (math.exp(a) - math.exp(-a)) / (math.exp(a) + math.exp(-a))
-
-def h2_act_derivative(a):
-    return 1 - h2_act(a)**2
-
-def h3_act(a):
-    return math.cos(a)
-
-def h3_act_derivative(a):
-    return - math.cos(a)
-
-def mult_derivative(x,a):
-    return a
-
-def add_derivative(x,c):
-    return 1
-
-def softmax(k, w, zn):
-    s = 0
-    K = w.shape[0]
-    for j in range(0, K):
-        s += np.exp(np.dot(np.transpose(w[j]),zn))
-    numerator = np.exp(np.dot(np.transpose(w[k]),zn))
-    if s!=0:
-        return numerator/s
-    return 0
+def choose_initializer(initializer):
+    ini = glorot
+    if initializer=='glorot':
+        ini = glorot
+    return ini
 
 
 # N training examples, D characteristics
