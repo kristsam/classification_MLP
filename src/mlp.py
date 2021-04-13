@@ -83,26 +83,21 @@ class MultiLayerPerceptron:
             x_new = np.copy(x)
         y = np.zeros(shape=(x_new.shape[0], self.K))
         z = np.zeros(shape=(self.M+1,1))
+        z1 = np.zeros(shape=(self.M+1,1))
         for i in range(0,x_new.shape[0]):
             z[0][0] = 1
-            for j in range(1,self.M+1):
-                z[j][0] = h(np.dot(np.transpose(w1[j-1]), x_new[i]))
+            z[1:,0] = h(np.dot(w1, x_new[i]))
             _o = np.reshape(np.dot(w2,z), newshape=(1,self.K))
             y[i] = fc.softmax(_o, ax=1)
 
         return y
 
     def score(self, y, t):
-        count = 0
-        for i in range(0,t.shape[0]):
-            index_max = 0
-            index_max2 = np.argmax(y[i])
-            for j in range(0,t.shape[1]):
-                if y[i][index_max] < y[i][j]:
-                    index_max = j
-            if t[i][index_max] == 1:
-                count += 1
-        return 1-count/t.shape[0]
+        # index of max values array
+        index_y = np.argmax(y, axis=1)
+        index_t = np.argmax(t, axis=1)
+        corrects = np.sum(index_y == index_t)
+        return 1-corrects/t.shape[0]
 
     def keep_the_best_fit(self, M, N, Nb, learning_rate, lam, epochs, h, report=None):
         D = self.D
@@ -124,21 +119,17 @@ class MultiLayerPerceptron:
                 w1 = self.initializer(M,D+1)
                 w2 = self.initializer(K,M+1)
                 for epoch in range(0,epochs):
-                    print("Running epoch "+str(epoch+1)+" out of "+str(epochs)+" for learning rate="+str(learning_rate[lr])+", lam="+str(lam[l])+"...")
                     for num1 in range(0, N, Nb):
                         # each batch
                         for num2 in range(0, Nb):
                             n = num1 + num2
                             z[num2][0] = 1
-                            for j in range(1,M+1):
-                                mult = np.dot(np.transpose(w1[j-1]), self.x_train[n])
-                                z[num2][j] = h(mult)
-                            
+                            z[num2,1:] = h(np.dot(w1, self.x_train[n]))
+
                             _o = np.dot(w2,z[num2])
                             y_out[num2] = fc.softmax(_o, ax=0)
 
                         cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],lam[l])
-                        print("cost="+str(cost))
                         w2 += learning_rate[lr]*gradient_w2
                         w1 += learning_rate[lr]*gradient_w1
 
@@ -158,6 +149,8 @@ class MultiLayerPerceptron:
                         epoch_best = -1
                         learning_rate_best = learning_rate[lr]
                         lam_best = lam[l]
+
+                    print("Epoch "+str(epoch+1)+" out of "+str(epochs)+" for learning rate="+str(learning_rate[lr])+", lam="+str(lam[l])+" - cost="+str(cost))
 
         if report is not None:
             self.save(error_in_epochs_list, learning_rate, lam, error_best, epoch_best, learning_rate_best, lam_best, report)
@@ -184,14 +177,9 @@ class MultiLayerPerceptron:
 
 
 def cost_gradient(t, y, w1, w2, z, x, l):
-    N = y.shape[0]
-    K = y.shape[1]
-    cost = 0
-    for n in range(0,N):
-        for k in range(0,K):
-            ynk  = y[n][k] #np.where(y[n][k] > 1.0e-10, y[n][k], 1.0e-10)
-            cost += t[n][k]*np.log(ynk)
-    cost -= l/2*np.sum(np.square(w2))
+
+    cost = np.sum(np.multiply(t, np.log(y))) - l/2*np.sum(np.square(w2))
+
     temp_w1 = np.insert(w1, 0, 1, axis=0)
     gradient_w2 = np.dot(np.transpose(t - y),z) - l*w2
     # TODO calc gradient for W1
