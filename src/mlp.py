@@ -82,14 +82,10 @@ class MultiLayerPerceptron:
         else:
             x_new = np.copy(x)
         y = np.zeros(shape=(x_new.shape[0], self.K))
-        z = np.zeros(shape=(self.M+1,1))
-        z1 = np.zeros(shape=(self.M+1,1))
-        for i in range(0,x_new.shape[0]):
-            z[0][0] = 1
-            z[1:,0] = h(np.dot(w1, x_new[i]))
-            _o = np.reshape(np.dot(w2,z), newshape=(1,self.K))
-            y[i] = fc.softmax(_o, ax=1)
-
+        z = np.zeros(shape=(x_new.shape[0], self.M+1))
+        z[:,0] = 1
+        z[:,1:] = h(np.dot(x, w1.T))
+        y = fc.softmax(np.dot(z,w2.T), ax=1)
         return y
 
     def score(self, y, t):
@@ -127,7 +123,7 @@ class MultiLayerPerceptron:
 
                         cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],lam[l])
                         w2 += learning_rate[lr]*gradient_w2
-                        w1 += learning_rate[lr]*gradient_w1
+                        # w1 += learning_rate[lr]*gradient_w1
 
                     # predict and return error
                     predictions_training = self.predict(self.x_train, w1, w2, h, fixed=True)
@@ -180,7 +176,7 @@ def cost_gradient(t, y, w1, w2, z, x, l):
     gradient_w2 = np.dot(np.transpose(t - y),z) - l*w2
     # TODO calc gradient for W1
     gradient_w1 = np.dot((t-y),w2)
-    # h3
+    # h3 FALSE
     gradient_w1 = np.dot(np.dot(np.dot((t-y),w2),-np.sin(np.dot(temp_w1,x.T))), x)
     return cost, gradient_w1, gradient_w2
 
