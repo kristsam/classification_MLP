@@ -120,14 +120,10 @@ class MultiLayerPerceptron:
                 w2 = self.initializer(K,M+1)
                 for epoch in range(0,epochs):
                     for num1 in range(0, N, Nb):
-                        # each batch
-                        for num2 in range(0, Nb):
-                            n = num1 + num2
-                            z[num2][0] = 1
-                            z[num2,1:] = h(np.dot(w1, self.x_train[n]))
-
-                            _o = np.dot(w2,z[num2])
-                            y_out[num2] = fc.softmax(_o, ax=0)
+                        # avoiding batch iteration throw linear algebra
+                        z[:,0] = 1
+                        z[:,1:] = h(np.dot(self.x_train[num1:num1+Nb], w1.T))
+                        y_out = fc.softmax(np.dot(z,w2.T))
 
                         cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],lam[l])
                         w2 += learning_rate[lr]*gradient_w2
