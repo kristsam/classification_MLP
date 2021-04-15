@@ -65,7 +65,7 @@ class MultiLayerPerceptron:
         # TODO learning values and lam value legend
         fig = plt.figure()
         
-        fig.suptitle('Multilayer Perceptron \n M='+str(self.M)+', Nb='+str(self.Nb)+', learning rate='+str(learning_rate)+', hita='+str(lam)+', h='+fc.h_act_to_string(self.h))
+        fig.suptitle('Multilayer Perceptron \n M='+str(self.M)+', Nb='+str(self.Nb)+', learning rate='+str(learning_rate)+', lambda='+str(lam)+', h='+fc.h_act_to_string(self.h))
 
         plt.subplot(2, 1, 1)
         plt.plot(error_in_epochs_list[:, 0]+1,error_in_epochs_list[:, 1], label="training data")
@@ -96,7 +96,7 @@ class MultiLayerPerceptron:
         y = np.zeros(shape=(x_new.shape[0], self.K))
         z = np.zeros(shape=(x_new.shape[0], self.M+1))
         z[:,0] = 1
-        z[:,1:] = h(np.dot(x, w1.T))
+        z[:,1:] = h(np.dot(x_new, w1.T))
         y = fc.softmax(np.dot(z,w2.T), ax=1)
         return y
 
