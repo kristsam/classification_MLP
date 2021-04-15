@@ -11,19 +11,23 @@ class MultiLayerPerceptron:
     def __init__(self):
         self.M = []
         self.h = []
+        self.h_der = []
         self.learning_rate = []
 
     def __choose_func(self, activation):
         if activation == self.VALID_FUNCTIONS[0]:
             h = fc.h1_act
+            h_der = fc.h1_act_derivative
         elif activation == self.VALID_FUNCTIONS[1]:
             h = fc.h2_act
+            h_der = fc.h2_act_derivative
         elif activation== self.VALID_FUNCTIONS[2]: 
             h = fc.h3_act
+            h_der = fc.h3_act_derivative
         else: 
             if activation not in self.VALID_FUNCTIONS:
                 raise ValueError("results: activation function must be one of %r." % self.VALID_FUNCTIONS)
-        return h
+        return h, h_der
 
     def add(self, m, activation):
         '''
@@ -37,7 +41,9 @@ class MultiLayerPerceptron:
         3. cos(a)
         '''
         self.M.append(m)
-        self.h.append(self.__choose_func(activation))
+        act, act_der = self.__choose_func(activation)
+        self.h.append(act)
+        self.h_der.append(act_der)
 
     def compile(self, learning_rate=[0.01], lam=[0.01], initializer='glorot'):
         if isinstance(learning_rate, list):
@@ -121,9 +127,9 @@ class MultiLayerPerceptron:
                         z[:,1:] = h(np.dot(self.x_train[num1:num1+Nb], w1.T))
                         y_out = fc.softmax(np.dot(z,w2.T))
 
-                        cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],lam[l])
+                        cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],self.h_der,lam[l])
                         w2 += learning_rate[lr]*gradient_w2
-                        # w1 += learning_rate[lr]*gradient_w1
+                        w1 += learning_rate[lr]*gradient_w1
 
                     # predict and return error
                     predictions_training = self.predict(self.x_train, w1, w2, h, fixed=True)
@@ -160,6 +166,7 @@ class MultiLayerPerceptron:
         # NOTE one inside layer
         self.M = self.M[0]
         self.h = self.h[0]
+        self.h_der = self.h_der[0]
         self.w1, self.w2, self.learning_rate_chosen, self.lam_chosen = self.keep_the_best_fit(self.M, self.N, self.Nb, self.learning_rate, self.lam, epochs, self.h, report)
 
     def summary(self):
@@ -168,16 +175,14 @@ class MultiLayerPerceptron:
         print("y training set shape =", self.y_train.shape)
 
 
-def cost_gradient(t, y, w1, w2, z, x, l):
+def cost_gradient(t, y, w1, w2, z, x, h_der, l):
 
     cost = np.sum(np.multiply(t, np.log(y))) - l/2*np.sum(np.square(w2))
 
     temp_w1 = np.insert(w1, 0, 1, axis=0)
     gradient_w2 = np.dot(np.transpose(t - y),z) - l*w2
-    # TODO calc gradient for W1
-    gradient_w1 = np.dot((t-y),w2)
-    # h3 FALSE
-    gradient_w1 = np.dot(np.dot(np.dot((t-y),w2),-np.sin(np.dot(temp_w1,x.T))), x)
+    gradient_w1 = np.dot(np.transpose(np.multiply(np.dot((t-y),w2)[:,1:], h_der(np.dot(x, w1.T)))), x) 
+
     return cost, gradient_w1, gradient_w2
 
 def glorot(fin, fout):
