@@ -7,6 +7,7 @@ import func as fc
 class MultiLayerPerceptron:
 
     VALID_FUNCTIONS = ['h1','h2','h3']
+    diagram_count = 0
 
     def __init__(self):
         self.M = []
@@ -60,23 +61,28 @@ class MultiLayerPerceptron:
         split_rows = int(x.shape[0]* (1-validation_split))
         return x[:split_rows, :], x[split_rows:, :]
 
-    def save(self, error_in_epochs_list, learning_rate, lam, error_best, epoch_best, learning_rate_best, lam_best, report):
+    def save(self, error_in_epochs_list, learning_rate, lam, report):
         # TODO learning values and lam value legend
         fig = plt.figure()
         
-        fig.suptitle("Multilayer Perceptron")
+        fig.suptitle('Multilayer Perceptron \n M='+str(self.M)+', Nb='+str(self.Nb)+', learning rate='+str(learning_rate)+', hita='+str(lam)+', h='+fc.h_act_to_string(self.h))
 
-        for i in range(0, len(learning_rate)):
-            for j in range(0,len(lam)):
-                plt.subplot(len(learning_rate), len(lam), i*len(lam) + j+1)
-                plt.plot(error_in_epochs_list[i, j, :, 0]+1,error_in_epochs_list[i, j, :, 1], label="training data")
-                plt.plot(error_in_epochs_list[i, j, :, 0]+1,error_in_epochs_list[i, j, :, 2], label="validation data")
-                plt.ylabel('error')
-                plt.xlabel('epochs')
-                plt.axis([1, error_in_epochs_list[i, j, -1, 0]+1, 0, 1])
+        plt.subplot(2, 1, 1)
+        plt.plot(error_in_epochs_list[:, 0]+1,error_in_epochs_list[:, 1], label="training data")
+        plt.plot(error_in_epochs_list[:, 0]+1,error_in_epochs_list[:, 2], label="validation data")
+        plt.ylabel('error')
+        plt.xlabel('epochs')
+        plt.axis([1, error_in_epochs_list[-1, 0]+1, 0, 1])
+
+        plt.subplot(2, 1, 2)
+        plt.plot(error_in_epochs_list[:, 0]+1,error_in_epochs_list[:, 3], label="training data")
+        plt.ylabel('cost')
+        plt.xlabel('epochs')
+        plt.axis([1, error_in_epochs_list[-1, 0]+1, np.min(error_in_epochs_list[:, 3]), 0])
 
         plt.legend()
-        fig.savefig(report)
+        fig.savefig(report+'diagram'+str(MultiLayerPerceptron.diagram_count)+'.png')
+        MultiLayerPerceptron.diagram_count +=1
         return
 
     def predict(self, x, w1=None, w2=None, h=None, fixed=False):
@@ -115,11 +121,12 @@ class MultiLayerPerceptron:
         y_out = np.empty(shape=(Nb,K))
         z = np.empty(shape=(Nb, M+1))
 
-        error_in_epochs_list = np.empty(shape=(len(learning_rate), len(lam), epochs, 3))
         for lr in range(0,len(learning_rate)):
             for l in range(0,len(lam)):
                 w1 = self.initializer(M,D+1)
                 w2 = self.initializer(K,M+1)
+                error_in_epochs_list = np.empty(shape=(epochs, 4))
+                error_in_epochs_list[:,3] = 0
                 for epoch in range(0,epochs):
                     for num1 in range(0, N, Nb):
                         # avoiding batch iteration throw linear algebra
@@ -130,28 +137,32 @@ class MultiLayerPerceptron:
                         cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],self.h_der,lam[l])
                         w2 += learning_rate[lr]*gradient_w2
                         w1 += learning_rate[lr]*gradient_w1
+                        
+                        error_in_epochs_list[epoch][3] += Nb/N*cost 
 
                     # predict and return error
                     predictions_training = self.predict(self.x_train, w1, w2, h, fixed=True)
                     predictions_validation = self.predict(self.x_validation, w1, w2, h, fixed=True)
                     error_training = self.score(predictions_training, self.y_train)
                     error_validation = self.score(predictions_validation, self.y_validation)
-                    error_in_epochs_list[lr][l][epoch][0] = epoch
-                    error_in_epochs_list[lr][l][epoch][1] = error_training
-                    error_in_epochs_list[lr][l][epoch][2] = error_validation
+                    error_in_epochs_list[epoch][0] = epoch
+                    error_in_epochs_list[epoch][1] = error_training
+                    error_in_epochs_list[epoch][2] = error_validation
 
                     if error_best > error_validation:
                         error_best = error_validation
                         w1_best = np.copy(w1)
                         w2_best = np.copy(w2)
-                        epoch_best = -1
+                        epoch_best = epoch
                         learning_rate_best = learning_rate[lr]
                         lam_best = lam[l]
 
-                    print("Epoch "+str(epoch+1)+" out of "+str(epochs)+" for learning rate="+str(learning_rate[lr])+", lam="+str(lam[l])+" - cost="+str(cost))
+                    print("Epoch "+str(epoch+1)+" out of "+str(epochs)+" for learning rate="+str(learning_rate[lr])+", lam="+str(lam[l])+" - cost="+str(error_in_epochs_list[epoch][3]))
+                print("")
 
-        if report is not None:
-            self.save(error_in_epochs_list, learning_rate, lam, error_best, epoch_best, learning_rate_best, lam_best, report)
+                if report is not None:
+                    self.save(error_in_epochs_list, learning_rate[lr], lam[l], report)
+        print("The best error was for learning rate="+str(learning_rate_best)+", lam="+str(lam_best)+" and epoch="+str(epoch_best+1)+".")
         return w1_best, w2_best, learning_rate_best, lam_best
 
     def fit(self, x, y, batch_size, epochs, validation_split=0.2, report=None):
@@ -177,11 +188,11 @@ class MultiLayerPerceptron:
 
 def cost_gradient(t, y, w1, w2, z, x, h_der, l):
 
-    cost = np.sum(np.multiply(t, np.log(y))) - l/2*np.sum(np.square(w2))
+    cost = np.sum(np.multiply(t, np.log(y))) - l/2*np.sum(np.square(w2)) - l/2*np.sum(np.square(w1))
 
     temp_w1 = np.insert(w1, 0, 1, axis=0)
     gradient_w2 = np.dot(np.transpose(t - y),z) - l*w2
-    gradient_w1 = np.dot(np.transpose(np.multiply(np.dot((t-y),w2)[:,1:], h_der(np.dot(x, w1.T)))), x) 
+    gradient_w1 = np.dot(np.transpose(np.multiply(np.dot((t-y),w2)[:,1:], h_der(np.dot(x, w1.T)))), x) - l*w1
 
     return cost, gradient_w1, gradient_w2
 
