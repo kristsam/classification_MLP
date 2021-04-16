@@ -3,48 +3,25 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 import func as fc
+import hiden_layer as hi
 
 class MultiLayerPerceptron:
 
-    VALID_FUNCTIONS = ['h1','h2','h3']
     diagram_count = 0
 
     def __init__(self):
-        self.M = []
-        self.h = []
-        self.h_der = []
+        # h_l = HidenLayer
+        self.h_l = []
         self.learning_rate = []
 
-    def __choose_func(self, activation):
-        if activation == self.VALID_FUNCTIONS[0]:
-            h = fc.h1_act
-            h_der = fc.h1_act_derivative
-        elif activation == self.VALID_FUNCTIONS[1]:
-            h = fc.h2_act
-            h_der = fc.h2_act_derivative
-        elif activation== self.VALID_FUNCTIONS[2]: 
-            h = fc.h3_act
-            h_der = fc.h3_act_derivative
-        else: 
-            if activation not in self.VALID_FUNCTIONS:
-                raise ValueError("results: activation function must be one of %r." % self.VALID_FUNCTIONS)
-        return h, h_der
 
-    def add(self, m, activation):
+    def add(self, layer):
         '''
         Parameters
         ----------
-        m (int):
-
-        activation (String): {'h1', 'h2', 'h3'} There are 3 activation functions:
-        1. log(1+exp(a))
-        2. (exp(a)-exp(-a))/(exp(a)+exp(-a))
-        3. cos(a)
+        layer (HidenLayer):
         '''
-        self.M.append(m)
-        act, act_der = self.__choose_func(activation)
-        self.h.append(act)
-        self.h_der.append(act_der)
+        self.h_l.append(layer)
 
     def compile(self, learning_rate=[0.01], lam=[0.01], initializer='glorot'):
         if isinstance(learning_rate, list):
@@ -55,17 +32,21 @@ class MultiLayerPerceptron:
              self.lam = lam
         elif isinstance(lam, int):
              self.lam = [lam]
-        self.initializer = choose_initializer(initializer)
+        self.initializer = initializer
 
     def __split(self, x, validation_split):
         split_rows = int(x.shape[0]* (1-validation_split))
         return x[:split_rows, :], x[split_rows:, :]
 
     def save(self, error_in_epochs_list, learning_rate, lam, report):
-        # TODO learning values and lam value legend
         fig = plt.figure()
         
-        fig.suptitle('Multilayer Perceptron \n M='+str(self.M)+', Nb='+str(self.Nb)+', learning rate='+str(learning_rate)+', lambda='+str(lam)+', h='+fc.h_act_to_string(self.h))
+        lot_m = ''
+        lot_h = ''
+        for k in range(0,len(self.h_l)):
+            lot_m += 'M'+str(k+1)+'='+str(self.h_l[k].units)+', '
+            lot_h += 'h'+str(k+1)+'='+self.h_l[k].activation_to_string()+', '
+        fig.suptitle('Multilayer Perceptron \n'+lot_m+'\n'+lot_h+'\n'+'Nb='+str(self.Nb)+', learning rate='+str(learning_rate)+', lambda='+str(lam))
 
         plt.subplot(2, 1, 1)
         plt.plot(error_in_epochs_list[:, 0]+1,error_in_epochs_list[:, 1], label="training data")
@@ -85,19 +66,22 @@ class MultiLayerPerceptron:
         MultiLayerPerceptron.diagram_count +=1
         return
 
-    def predict(self, x, w1=None, w2=None, h=None, fixed=False):
+    def predict(self, x, hiden_layers=None, output_layer=None, fixed=False):
         if not fixed:
-            x_new = np.insert(x, 0, 1, axis=1)
-            w1 = self.w1
-            w2 = self.w2
-            h = self.h
+            x_new = np.insert(x/255, 0, 1, axis=1)
+            h_l = self.h_l_best
+            o_l = self.o_l_best
         else:
             x_new = np.copy(x)
-        y = np.zeros(shape=(x_new.shape[0], self.K))
-        z = np.zeros(shape=(x_new.shape[0], self.M+1))
-        z[:,0] = 1
-        z[:,1:] = h(np.dot(x_new, w1.T))
-        y = fc.softmax(np.dot(z,w2.T), ax=1)
+            h_l = hiden_layers
+            o_l = output_layer
+        for k in range(0, len(h_l)):
+            if k == 0:
+                h_l[k].output(x_new)
+            else:
+                h_l[k].output(h_l[k-1].o)
+        y = o_l.output(h_l[-1].o) 
+
         return y
 
     def score(self, y, t):
@@ -107,42 +91,51 @@ class MultiLayerPerceptron:
         corrects = np.sum(index_y == index_t)
         return 1-corrects/t.shape[0]
 
-    def keep_the_best_fit(self, M, N, Nb, learning_rate, lam, epochs, h, report=None):
-        D = self.D
-        K = self.K
+    def fit(self, x, y, batch_size, epochs, validation_split=0.2, report=None):
         
+        self.x_train, self.x_validation = self.__split(x/255, validation_split) #normalize x by dividing with 255
+        self.y_train, self.y_validation = self.__split(y, validation_split)
+        self.N = self.x_train.shape[0]
+        self.D = self.x_train.shape[1]
+        self.K = y.shape[1]
+        self.Nb = batch_size
+        self.x_train = np.insert(self.x_train, 0, 1, axis=1)
+        self.x_validation = np.insert(self.x_validation, 0, 1, axis=1)
         error_best = sys.maxsize
-        epoch_best = -1
-        learning_rate_best = -1
-        lam_best = -1
-        w1_best = self.initializer(M,D+1)
-        w2_best = self.initializer(K,M+1)
 
-        y_out = np.empty(shape=(Nb,K))
-        z = np.empty(shape=(Nb, M+1))
 
-        for lr in range(0,len(learning_rate)):
-            for l in range(0,len(lam)):
-                w1 = self.initializer(M,D+1)
-                w2 = self.initializer(K,M+1)
+        for lr in range(0,len(self.learning_rate)):
+            for l in range(0,len(self.lam)):
                 error_in_epochs_list = np.empty(shape=(epochs, 4))
                 error_in_epochs_list[:,3] = 0
+                for k in range(0, len(self.h_l)):
+                    old_units = 0
+                    if k == 0:
+                        old_units = self.x_train.shape[1]
+                    else:
+                        old_units = self.h_l[k-1].layer_units()
+                    self.h_l[k].adjust(old_layer_units=old_units, initializer=self.initializer )
+                self.o_l = hi.OutputLayer(y.shape[1])
+                self.o_l.adjust(self.h_l[-1].layer_units(), initializer=self.initializer)
                 for epoch in range(0,epochs):
-                    for num1 in range(0, N, Nb):
-                        # avoiding batch iteration throw linear algebra
-                        z[:,0] = 1
-                        z[:,1:] = h(np.dot(self.x_train[num1:num1+Nb], w1.T))
-                        y_out = fc.softmax(np.dot(z,w2.T))
+                    for num1 in range(0, self.N, self.Nb):
+                        for k in range(0, len(self.h_l)):
+                            if k == 0:
+                                self.h_l[k].output(self.x_train[num1:num1+self.Nb])
+                            else:
+                                self.h_l[k].output(self.h_l[k-1].o)
+                        y_out = self.o_l.output(self.h_l[-1].o) 
 
-                        cost, gradient_w1, gradient_w2 = cost_gradient(self.y_train[num1:num1+Nb],y_out,w1,w2,z,self.x_train[num1:num1+Nb],self.h_der,lam[l])
-                        w2 += learning_rate[lr]*gradient_w2
-                        w1 += learning_rate[lr]*gradient_w1
+                        cost, h_l_gradients, o_l_gradient = cost_gradient(self.y_train[num1:num1+self.Nb],y_out,self.x_train[num1:num1+self.Nb],self.h_l,self.o_l,self.lam[l])
+                        self.o_l.w += self.learning_rate[lr]*o_l_gradient
+                        for k in range(0,len(self.h_l)):
+                            self.h_l[k].w += self.learning_rate[lr]*h_l_gradients[k]
                         
-                        error_in_epochs_list[epoch][3] += Nb/N*cost 
+                        error_in_epochs_list[epoch][3] += self.Nb/self.N*cost 
 
                     # predict and return error
-                    predictions_training = self.predict(self.x_train, w1, w2, h, fixed=True)
-                    predictions_validation = self.predict(self.x_validation, w1, w2, h, fixed=True)
+                    predictions_training = self.predict(self.x_train, self.h_l, self.o_l, fixed=True)
+                    predictions_validation = self.predict(self.x_validation, self.h_l, self.o_l, fixed=True)
                     error_training = self.score(predictions_training, self.y_train)
                     error_validation = self.score(predictions_validation, self.y_validation)
                     error_in_epochs_list[epoch][0] = epoch
@@ -151,68 +144,43 @@ class MultiLayerPerceptron:
 
                     if error_best > error_validation:
                         error_best = error_validation
-                        w1_best = np.copy(w1)
-                        w2_best = np.copy(w2)
+                        h_l_best = self.h_l
+                        o_l_best = self.o_l
                         epoch_best = epoch
-                        learning_rate_best = learning_rate[lr]
-                        lam_best = lam[l]
+                        learning_rate_best = self.learning_rate[lr]
+                        lam_best = self.lam[l]
 
-                    print("Epoch "+str(epoch+1)+" out of "+str(epochs)+" for learning rate="+str(learning_rate[lr])+", lam="+str(lam[l])+" - cost="+str(error_in_epochs_list[epoch][3]))
+                    print("Epoch "+str(epoch+1)+" out of "+str(epochs)+" for learning rate="+str(self.learning_rate[lr])+", lam="+str(self.lam[l])+" - cost="+str(error_in_epochs_list[epoch][3]))
                 print("")
 
                 if report is not None:
-                    self.save(error_in_epochs_list, learning_rate[lr], lam[l], report)
+                    self.save(error_in_epochs_list, self.learning_rate[lr], self.lam[l], report)
         print("The best error was for learning rate="+str(learning_rate_best)+", lam="+str(lam_best)+" and epoch="+str(epoch_best+1)+".")
-        return w1_best, w2_best, learning_rate_best, lam_best
+        self.h_l_best = h_l_best
+        self.o_l_best = o_l_best
+        self.learning_rate_best = learning_rate_best
+        self.lam_best = lam_best
+        return
 
-    def fit(self, x, y, batch_size, epochs, validation_split=0.2, report=None):
-        self.x_train, self.x_validation = self.__split(x/255, validation_split) #normalize x by dividing with 255
-        self.y_train, self.y_validation = self.__split(y, validation_split)
-        self.N = self.x_train.shape[0]
-        self.D = self.x_train.shape[1]
-        self.Nb = batch_size
-        self.x_train = np.insert(self.x_train, 0, 1, axis=1)
-        self.x_validation = np.insert(self.x_validation, 0, 1, axis=1)
-        self.K = y.shape[1]
-        # NOTE one inside layer
-        self.M = self.M[0]
-        self.h = self.h[0]
-        self.h_der = self.h_der[0]
-        self.w1, self.w2, self.learning_rate_chosen, self.lam_chosen = self.keep_the_best_fit(self.M, self.N, self.Nb, self.learning_rate, self.lam, epochs, self.h, report)
+def cost_gradient(t, y, x, h_l, o_l, l):
 
-    def summary(self):
-        print("N =",self.N," D =",self.D," M =",self.M," K =",self.K," Nb =",self.Nb," l =", self.lam)
-        print("x training set shape =", self.x_train.shape)
-        print("y training set shape =", self.y_train.shape)
+    cost = np.sum(np.multiply(t, np.log(y)))
+    cost -= l/2*np.sum(np.square(o_l.w))
+    for k in range(0, len(h_l)):
+        cost -= l/2*np.sum(np.square(h_l[k].w))
 
+    gradient_hiden_layers = []
 
-def cost_gradient(t, y, w1, w2, z, x, h_der, l):
+    back = t-y
+    gradient_output_layer = o_l.back_propagation(back) - l*o_l.w
+    back = np.dot(back, o_l.w)
+    gradient_hiden_layers.append(h_l[-1].back_propagation(back))
+    for k in range(len(h_l)-2,-1,-1):
+        back = h_l[k+1].crop(back)
+        back = np.dot(back, h_l[k+1].w)
+        gradient_hiden_layers.append(h_l[k].back_propagation(back))
+    # reoreder from end to start
+    reorder = [k for k in range(len(h_l)-1,-1,-1)]
+    gradient_hiden_layers = [gradient_hiden_layers[i] for i in reorder]
 
-    cost = np.sum(np.multiply(t, np.log(y))) - l/2*np.sum(np.square(w2)) - l/2*np.sum(np.square(w1))
-
-    temp_w1 = np.insert(w1, 0, 1, axis=0)
-    gradient_w2 = np.dot(np.transpose(t - y),z) - l*w2
-    gradient_w1 = np.dot(np.transpose(np.multiply(np.dot((t-y),w2)[:,1:], h_der(np.dot(x, w1.T)))), x) - l*w1
-
-    return cost, gradient_w1, gradient_w2
-
-def glorot(fin, fout):
-    x = math.sqrt(6/(fin+fout))
-    w = np.empty(shape=(fin,fout))
-    for i in range(0,w.shape[0]):
-        for j in range(0,w.shape[1]):
-            w[i][j] = np.random.uniform(-x,x)
-    return w
-
-def choose_initializer(initializer):
-    ini = glorot
-    if initializer=='glorot':
-        ini = glorot
-    return ini
-
-
-# N training examples, D characteristics
-# M weight vectors per characteristic
-# K classes
-# Nb minibatch 
-# l learning rate, l>=0
+    return cost, gradient_hiden_layers, gradient_output_layer
