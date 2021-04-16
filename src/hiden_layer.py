@@ -2,12 +2,12 @@ import func as fc
 import numpy as np
 import math 
 
-class HidenLayer:
+class HiddenLayer:
 
     VALID_FUNCTIONS = ['softplus','tanh','cos']
 
     def __choose_func(self, activation):
-        if activation in HidenLayer.VALID_FUNCTIONS:
+        if activation in HiddenLayer.VALID_FUNCTIONS:
             h = eval('fc.'+activation )
             h_der = eval('fc.'+activation+"_derivative")
         else: 
@@ -91,7 +91,3 @@ def choose_initializer(initializer):
     if initializer=='glorot':
         ini = glorot
     return ini
-
-# h_l = HidenLayer(units=100, activation='cos')
-# print(h_l.activation_to_string())
-# print(h_l.activation(1))

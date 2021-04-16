@@ -10,7 +10,7 @@ class MultiLayerPerceptron:
     diagram_count = 0
 
     def __init__(self):
-        # h_l = HidenLayer
+        # h_l = HiddenLayer
         self.h_l = []
         self.learning_rate = []
 
@@ -19,7 +19,7 @@ class MultiLayerPerceptron:
         '''
         Parameters
         ----------
-        layer (HidenLayer):
+        layer (HiddenLayer):
         '''
         self.h_l.append(layer)
 
@@ -66,14 +66,14 @@ class MultiLayerPerceptron:
         MultiLayerPerceptron.diagram_count +=1
         return
 
-    def predict(self, x, hiden_layers=None, output_layer=None, fixed=False):
+    def predict(self, x, hidden_layers, output_layer=None, fixed=False):
         if not fixed:
             x_new = np.insert(x/255, 0, 1, axis=1)
             h_l = self.h_l_best
             o_l = self.o_l_best
         else:
             x_new = np.copy(x)
-            h_l = hiden_layers
+            h_l = hidden_layers
             o_l = output_layer
         for k in range(0, len(h_l)):
             if k == 0:
@@ -169,18 +169,18 @@ def cost_gradient(t, y, x, h_l, o_l, l):
     for k in range(0, len(h_l)):
         cost -= l/2*np.sum(np.square(h_l[k].w))
 
-    gradient_hiden_layers = []
+    gradient_hidden_layers = []
 
     back = t-y
     gradient_output_layer = o_l.back_propagation(back) - l*o_l.w
     back = np.dot(back, o_l.w)
-    gradient_hiden_layers.append(h_l[-1].back_propagation(back))
+    gradient_hidden_layers.append(h_l[-1].back_propagation(back))
     for k in range(len(h_l)-2,-1,-1):
         back = h_l[k+1].crop(back)
         back = np.dot(back, h_l[k+1].w)
-        gradient_hiden_layers.append(h_l[k].back_propagation(back))
+        gradient_hidden_layers.append(h_l[k].back_propagation(back))
     # reoreder from end to start
     reorder = [k for k in range(len(h_l)-1,-1,-1)]
-    gradient_hiden_layers = [gradient_hiden_layers[i] for i in reorder]
+    gradient_hidden_layers = [gradient_hidden_layers[i] for i in reorder]
 
-    return cost, gradient_hiden_layers, gradient_output_layer
+    return cost, gradient_hidden_layers, gradient_output_layer

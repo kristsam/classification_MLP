@@ -18,8 +18,8 @@ for h in h_act:
     for m in M:
         for nb in NB:
             model = mlp.MultiLayerPerceptron()
-            model.add(hl.HidenLayer(m, activation=h, add_column=True))
-            model.compile([0.0001,0.00001], [0.0001])
+            model.add(hl.HiddenLayer(m, activation=h, add_column=True))
+            model.compile([0.0001,0.00001], [0.00001])
             model.fit(x_train, y_train, batch_size=nb, epochs=50, validation_split=0.2, report=diagram_file)
             y_test_predictions = model.predict(x_test)
             test_error.append(model.score(y_test_predictions, y_test))
