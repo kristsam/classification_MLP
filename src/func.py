@@ -24,12 +24,6 @@ def cos(a):
 def cos_derivative(a):
     return -np.sin(a)
 
-def mult_derivative(x,a):
-    return a
-
-def add_derivative(x,c):
-    return 1
-
 def softmax(x, ax=1):
     m = np.max( x, axis=ax, keepdims=True )#max per row
     p = np.exp( x - m )
