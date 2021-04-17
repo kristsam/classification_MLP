@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2021-04-17T15:00:31.198Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36" etag="DEl3yYZ9fi4_kpWFUxp3" version="14.6.0" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2021-04-17T15:03:25.915Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.128 Safari/537.36" etag="N1BDGLtb5yt_4zPsCgM4" version="14.6.0" type="github" pages="2">
   <diagram id="xYctWNXIILo5AqreTcQN" name="network_one">
     <mxGraphModel dx="1422" dy="775" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -442,8 +442,8 @@
             <mxPoint x="572" y="412" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nE4eOrgpkkczqjc7lihH-24" value="&lt;span style=&quot;font-size: 20px&quot;&gt;1&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;" vertex="1" parent="SPXRel4NC48ZoxL2uMbs-1">
-          <mxGeometry x="440" y="360" width="30" height="20" as="geometry" />
+        <mxCell id="nE4eOrgpkkczqjc7lihH-24" value="&lt;span style=&quot;font-size: 20px&quot;&gt;ONE&lt;/span&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;" vertex="1" parent="SPXRel4NC48ZoxL2uMbs-1">
+          <mxGeometry x="425" y="360" width="60" height="20" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
