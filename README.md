@@ -25,5 +25,8 @@ A specific example for the given project can be captured by two diagrams.
 The below diagram was produced for **back propagation** needs. The `h` fucntion can be `softplus`, `tanh`, or `cos`. 
 ![network back propagation](report/network_back.png)
 
+## Maths
+There are some algebra calculations, in order to compute the last hidden layer weight cost derivatives based on back propagation. You can track them [here](report/math_back_propagation.md). 
+
 ## Notes
 Hypothetically speaking, this model should work for plenty of hidden layers, but it sure does work with **one hidden layer**!
