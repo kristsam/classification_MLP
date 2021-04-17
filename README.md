@@ -10,12 +10,20 @@ Data taken from toronto edu ([here](https://www.cs.toronto.edu/~kriz/cifar.html)
 
 ## Usage
 To use this Multi Layer Perceptron implementation, user has to:
-1. Create an `MultiLayerPerceptron` object. 
+1. Create a `MultiLayerPerceptron` object. 
 2. Call `add` method to add `HiddenLayer` object in the MLP containing plenty of parameters.
 3. Call  `compile` method to add the hyper-parameters.
 4. Fit the the model by calling `fit` with parameters (size of batch from SGA etc).
 5. Call `predict` giving the testing set.
 6. Call `score` to compute error between predicted test values and real test values. 
 
+## Network
+A specific example for the given project can be captured by two diagrams.  
+
+![network](report/network_one.png)  
+  
+The below diagram was produced for **back propagation** needs. The `h` fucntion can be `softplus`, `tanh`, or `cos`. 
+![network back propagation](report/network_back.png)
+
 ## Notes
-Hypothetically speaking, this model should work for plenty of hidden layers, but it sure does work with **one hidden layer**!.
+Hypothetically speaking, this model should work for plenty of hidden layers, but it sure does work with **one hidden layer**!
