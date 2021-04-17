@@ -2,3 +2,8 @@ data/
 diagrams/**
 !diagrams/.gitkeep
 **/__pycache__/
+report/math.aux
+report/math.log
+report/math.out
+report/math.pdf
+report/math.synctex.gz
