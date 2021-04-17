@@ -1,7 +1,7 @@
 import mlp
 import os, time
 import read as r
-import hiden_layer as hl
+import layers
 
 start = time.time()
 
@@ -18,7 +18,7 @@ for h in h_act:
     for m in M:
         for nb in NB:
             model = mlp.MultiLayerPerceptron()
-            model.add(hl.HiddenLayer(m, activation=h, add_column=True))
+            model.add(layers.HiddenLayer(m, activation=h, add_column=True))
             model.compile([0.0001,0.00001], [0.00001])
             model.fit(x_train, y_train, batch_size=nb, epochs=50, validation_split=0.2, report=diagram_file)
             y_test_predictions = model.predict(x_test)

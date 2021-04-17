@@ -3,7 +3,7 @@ import numpy as np
 import sys, copy
 import matplotlib.pyplot as plt
 import func as fc
-import hiden_layer as hi
+import layers
 
 class MultiLayerPerceptron:
 
@@ -115,7 +115,7 @@ class MultiLayerPerceptron:
                     else:
                         old_units = self.h_l[k-1].layer_units()
                     self.h_l[k].adjust(old_layer_units=old_units, initializer=self.initializer )
-                self.o_l = hi.OutputLayer(y.shape[1])
+                self.o_l = layers.OutputLayer(y.shape[1])
                 self.o_l.adjust(self.h_l[-1].layer_units(), initializer=self.initializer)
                 for epoch in range(0,epochs):
                     for num1 in range(0, self.N, self.Nb):
