@@ -22,7 +22,8 @@ A specific example for the given project can be captured by two diagrams. The di
 
 ![network](report/network_one.png)  
   
-The below diagram was produced for **back propagation** needs. The `h` fucntion can be `softplus`, `tanh`, or `cos`. 
+The below diagram was produced for **back propagation** needs. The `h` fucntion can be `softplus`, `tanh`, or `cos`.  
+`ONE` can be considered as a column vector with all its' elements' values be equal to `1`.   
 ![network back propagation](report/network_back.png)
 
 ## Maths
