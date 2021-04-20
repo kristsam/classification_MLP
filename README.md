@@ -47,9 +47,9 @@ For MNIST data, the outcome was quite positive as the models' validation predict
 2. CIFAR-10  
 For CIFAR-10 data, the outcome was quite frustrating. The one hidden layer models' predictions in validation set -and even in training set- had 50% ~ 60% error. This makes sense as this classification problem is quite more difficult comparing to MNIST. The model is too simple and the data may be few to get a better approach in this task. The interesting part can be found in the prefered learning rate value. Comparing to MNIST, in CIFAR-10 higher learning rate values fits the model in a better way.  
 
-![diagram1](diagrams/mnist/diagram1.png)
-![diagram3](diagrams/mnist/diagram3.png)
-![diagram4](diagrams/mnist/diagram4.png)
+![diagram1](diagrams/cifar-10/diagram1.png)
+![diagram3](diagrams/cifar-10/diagram3.png)
+![diagram4](diagrams/cifar-10/diagram4.png)
 
 ## Notes
 Hypothetically speaking, this model should work for plenty of hidden layers, but it sure does work with **one hidden layer**!
