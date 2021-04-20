@@ -1,5 +1,7 @@
 data/
-# diagrams/**
+diagrams/**
+!diagrams/mnist
+!diagrams/cifar-10
 !diagrams/.gitkeep
 !diagrams/mnist/diagram1.png
 !diagrams/mnist/diagram4.png
