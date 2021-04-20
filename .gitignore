@@ -1,5 +1,5 @@
 data/
-diagrams/**
+# diagrams/**
 !diagrams/.gitkeep
 !diagrams/mnist/diagram1.png
 !diagrams/mnist/diagram4.png
