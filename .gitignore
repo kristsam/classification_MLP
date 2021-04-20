@@ -1,6 +1,16 @@
 data/
 diagrams/**
 !diagrams/.gitkeep
+!diagrams/mnist/diagram1.png
+!diagrams/mnist/diagram4.png
+!diagrams/mnist/diagram5.png
+!diagrams/mnist/diagram13.png
+!diagrams/mnist/diagram14.png
+!diagrams/mnist/diagram29.png
+!diagrams/mnist/diagram30.png
+!diagrams/cifar-10/diagram1.png
+!diagrams/cifar-10/diagram3.png
+!diagrams/cifar-10/diagram4.png
 **/__pycache__/
 report/math.aux
 report/math.log
