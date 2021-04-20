@@ -34,11 +34,22 @@ Given the mini-batch, the hidden units amount, the epochs to run, development se
 
 ## Outcome 
 1. MNIST  
-For MNIST data, the outcome was quite positive as the models' validation predictions had in most cases less than 20% error after the 20th epoch. For the same function, mini-batch, hidden layer units and lambda, lower learning rate seems to act better in the model. As expected, for mini-batch higher values, the model has higher error in the same amount of epochs, but it's being trained faster. When having larger hidden units, the model has higher error percentage because it needs more data and more epochs to update the weights properly. As for the functions, `tanh` seems to be the best with `softplus` and `cos` having almost the same results. 
+For MNIST data, the outcome was quite positive as the models' validation predictions had in most cases less than 20% error after the 20th epoch. For the same function, mini-batch, hidden layer units and lambda, lower learning rate seems to act better in the model. As expected, for mini-batch higher values, the model has higher error in the same amount of epochs, but it's being trained faster. When having larger hidden units, the model has higher error percentage because it needs more data and more epochs to update the weights properly. As for the functions, `tanh` seems to be the best with `softplus` and `cos` having almost the same results. Lambda (weight regularization) = 0.0001 was almost identical for the least error percentage in development set in comparison to other values.  
+
+![diagram1](diagrams/mnist/diagram1.png)
+![diagram4](diagrams/mnist/diagram4.png)
+![diagram5](diagrams/mnist/diagram5.png)
+![diagram13](diagrams/mnist/diagram13.png)
+![diagram14](diagrams/mnist/diagram14.png)
+![diagram29](diagrams/mnist/diagram29.png)
+![diagram30](diagrams/mnist/diagram30.png)
 
 2. CIFAR-10  
-For CIFAR-10 data, the outcome was quite frustrating. The one hidden layer models' predictions in validation set -and even in training set- had 50% ~ 60% error. This makes sense as this classification problem is quite more difficult comparing to MNIST. The model is too simple and the data may be few to get a better approach in this task. The interesting part can be found in the prefered learning rate value. Comparing to MNIST, in CIFAR-10 higher learning rate values fits the model in a better way.
+For CIFAR-10 data, the outcome was quite frustrating. The one hidden layer models' predictions in validation set -and even in training set- had 50% ~ 60% error. This makes sense as this classification problem is quite more difficult comparing to MNIST. The model is too simple and the data may be few to get a better approach in this task. The interesting part can be found in the prefered learning rate value. Comparing to MNIST, in CIFAR-10 higher learning rate values fits the model in a better way.  
 
+![diagram1](diagrams/mnist/diagram1.png)
+![diagram3](diagrams/mnist/diagram3.png)
+![diagram4](diagrams/mnist/diagram4.png)
 
 ## Notes
 Hypothetically speaking, this model should work for plenty of hidden layers, but it sure does work with **one hidden layer**!
