@@ -63,10 +63,11 @@ class MultiLayerPerceptron:
 
         plt.legend()
         fig.savefig(report+'diagram'+str(MultiLayerPerceptron.diagram_count)+'.png')
+        print('Diagram saved!\n')
         MultiLayerPerceptron.diagram_count +=1
         return
 
-    def predict(self, x, hidden_layers, output_layer=None, fixed=False):
+    def predict(self, x, hidden_layers=None, output_layer=None, fixed=False):
         if not fixed:
             x_new = np.insert(x/255, 0, 1, axis=1)
             h_l = self.h_l_best
