@@ -20,31 +20,20 @@ def one_hot_vector(y):
     return y_out
 
 def rearrange(x, y):
-    x1, x2, x3 = [], [], []
-    y1, y2, y3 = [], [], []
-    for i in range(0,len(x)):
-        r = random.random()
-        if r < 0.33:
-            x1.append(x[i])
-            y1.append(y[i])
-        elif r < 0.66:
-            x2.append(x[i])
-            y2.append(y[i])
-        else:
-            x3.append(x[i])
-            y3.append(y[i])
-    return x1+x2+x3, y1+y2+y3
+    indices = np.random.choice(x.shape[0],size =(x.shape[0]), replace=False)
+    return x[indices], y[indices]
 
 def read(path):
     x_train, y_train = choose(path,"train")
+    x_train = np.array(x_train)
+    y_train = np.array(y_train)
     x_train, y_train = rearrange(x_train, y_train)
 
     x_test, y_test = choose(path,"test")
-
-    x_train = np.array(x_train)
-    y_train = np.array(y_train)
     x_test = np.array(x_test)
     y_test = np.array(y_test)
+    x_test, y_test = rearrange(x_test, y_test)
+
     print('MNIST dataset read and ready for use.\n')
 
     return x_train, y_train, x_test, y_test
