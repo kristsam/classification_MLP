@@ -27,7 +27,7 @@ The below diagram was produced for **back propagation** needs. The `h` fucntion 
 ![network back propagation](report/network_back.png)
 
 ## Maths
-There are some algebra calculations, in order to compute the last hidden layer weight cost derivatives based on back propagation. You can track them [here](report/math_back_propagation.md). 
+There are some algebra calculations, in order to compute the last hidden layer weight cost derivatives based on back propagation. You can track them [here](report/math_back_propagation.ipynb). 
 
 ## Parameters
 Given the mini-batch, the hidden units amount, the epochs to run, development set percentage, the model runs through some given lamda (weight regularization) values and learning rate values, peaking the lowest developments' score error model and the epoch in which it was calculated. This model afterwards, is the chosen model, to be used in test set predictions.
