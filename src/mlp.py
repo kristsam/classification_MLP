@@ -63,7 +63,7 @@ class MultiLayerPerceptron:
 
         plt.legend()
         fig.savefig(report+'diagram'+str(MultiLayerPerceptron.diagram_count)+'.png')
-        print('Diagram saved!\n')
+        print('Diagram saved as '+'"diagram'+str(MultiLayerPerceptron.diagram_count)+'.png" !'+ '\n')
         MultiLayerPerceptron.diagram_count +=1
         return
 
@@ -151,7 +151,7 @@ class MultiLayerPerceptron:
 
                 if report is not None:
                     self.save(error_in_epochs_list, self.learning_rate[lr], self.lam[l], report)
-        print("The best error was for learning rate="+str(learning_rate_best)+", lam="+str(lam_best)+" and epoch="+str(epoch_best+1)+".\n")
+        print("The least error was "+str(error_best)+" found for learning rate="+str(learning_rate_best)+", lam="+str(lam_best)+" and epoch="+str(epoch_best+1)+".\n")
         self.h_l_best = h_l_best
         self.o_l_best = o_l_best
         self.learning_rate_best = learning_rate_best
