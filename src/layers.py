@@ -31,12 +31,12 @@ class HiddenLayer:
         self.w = init(self.units,old_layer_units)
 
     
-    def output(self, x):
+    def forward_propagation(self, x):
         self.input = x
-        self.o = self.activation(np.dot(self.input,self.w.T))
+        o = self.activation(np.dot(self.input,self.w.T))
         if self.add_column:
-            self.o = np.insert(self.o, 0, 1, axis=1)
-        return self.o
+            o = np.insert(o, 0, 1, axis=1)
+        return o
     
     def back_propagation(self, x):
         index = 0 
@@ -69,10 +69,10 @@ class OutputLayer:
         init = choose_initializer(initializer)
         self.w = init(self.output_features,old_layer_units)
 
-    def output(self, x):
+    def forward_propagation(self, x):
         self.input = x
-        self.y = self.activation(np.dot(self.input,self.w.T))
-        return self.y
+        y = self.activation(np.dot(self.input,self.w.T))
+        return y
 
     def back_propagation(self,x):
         return np.dot(x.T, self.input)

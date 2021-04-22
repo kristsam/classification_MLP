@@ -78,10 +78,10 @@ class MultiLayerPerceptron:
             o_l = output_layer
         for k in range(0, len(h_l)):
             if k == 0:
-                h_l[k].output(x_new)
+                o = h_l[k].forward_propagation(x_new)
             else:
-                h_l[k].output(h_l[k-1].o)
-        y = o_l.output(h_l[-1].o) 
+                o = h_l[k].forward_propagation(o)
+        y = o_l.forward_propagation(o) 
 
         return y
 
@@ -120,12 +120,7 @@ class MultiLayerPerceptron:
                 self.o_l.adjust(self.h_l[-1].layer_units(), initializer=self.initializer)
                 for epoch in range(0,epochs):
                     for num1 in range(0, self.N, self.Nb):
-                        for k in range(0, len(self.h_l)):
-                            if k == 0:
-                                self.h_l[k].output(self.x_train[num1:num1+self.Nb])
-                            else:
-                                self.h_l[k].output(self.h_l[k-1].o)
-                        y_out = self.o_l.output(self.h_l[-1].o) 
+                        y_out = self.predict(self.x_train[num1:num1+self.Nb], self.h_l, self.o_l, fixed=True)
 
                         cost, h_l_gradients, o_l_gradient = cost_gradient(self.y_train[num1:num1+self.Nb],y_out,self.x_train[num1:num1+self.Nb],self.h_l,self.o_l,self.lam[l])
                         self.o_l.w += self.learning_rate[lr]*o_l_gradient
@@ -163,25 +158,82 @@ class MultiLayerPerceptron:
         self.lam_best = lam_best
         return
 
+
+def cost_func(t, y, weights, l):
+    cost = np.sum(np.multiply(t, np.log(y)))
+    for k in range(0, len(weights)):
+        cost -= l/2*np.sum(np.square(weights[k]))
+    return cost
+
+
+def check_gradient(t, x, h_l, o_l, l, g_h_l, g_o_l):
+    epsilon = 1e-5
+    # check the gradient
+
+    temp_o_l = copy.deepcopy(o_l)
+
+    # hidden layers gradient check
+    g_h_l_estimate = []
+    for j in range(0, len(h_l)):
+        g_h_l_estimate.append(np.empty(shape=(2, h_l[j].w.shape[0], h_l[j].w.shape[1])))
+        for m in range(0, g_h_l_estimate[j].shape[1]):
+            for k in range(0, g_h_l_estimate[j].shape[2]):
+                for i in range(0,g_h_l_estimate[j].shape[0]):
+                    temp_h_l = copy.deepcopy(h_l)
+                    temp_h_l[j].w[m][k] = temp_h_l[j].w[m][k] + ((-1)**i)*epsilon
+                    y_out = MultiLayerPerceptron.predict(MultiLayerPerceptron, x=x, hidden_layers=temp_h_l, output_layer=temp_o_l, fixed=True)
+                    weights = [temp_h_l[g].w for g in range(0, len(temp_h_l))]
+                    weights.append(temp_o_l.w)
+                    g_h_l_estimate[j][i][m][k] = cost_func(t, y_out, weights, l)
+        
+    estimation_g_h_l = []
+    for k in range (0, len(g_h_l_estimate)):
+        estimation_g_h_l.append((g_h_l_estimate[k][0] - g_h_l_estimate[k][1]) / (2*epsilon))
+    
+    # output layer gradient check
+    temp_h_l = copy.deepcopy(h_l)
+
+    g_o_l_estimate = np.empty(shape=(2, o_l.w.shape[0], o_l.w.shape[1]))
+    for m in range(0, g_o_l_estimate.shape[1]):
+        for k in range(0, g_o_l_estimate.shape[2]):
+            for i in range(0,g_o_l_estimate.shape[0]):
+                temp_o_l = copy.deepcopy(o_l)
+                temp_o_l.w[m][k] =  temp_o_l.w[m][k] + ((-1)**i)*epsilon
+                y_out = MultiLayerPerceptron.predict(MultiLayerPerceptron, x=x, hidden_layers=temp_h_l, output_layer=temp_o_l, fixed=True)
+                weights = [temp_h_l[g].w for g in range(0, len(temp_h_l))]
+                weights.append(temp_o_l.w)
+                g_o_l_estimate[i][m][k] = cost_func(t, y_out, weights, l)
+
+    estimation_g_o_l = (g_o_l_estimate[0] - g_o_l_estimate[1]) / (2*epsilon)
+
+    if np.max(np.abs(estimation_g_o_l - g_o_l)) > epsilon*2:
+        print("WARNING. Inaccurate derivative calculated.")  
+
+    for k in range(0,len(h_l)):
+        if np.max(np.abs(estimation_g_h_l[k] - g_h_l[k])) >  epsilon*2:
+            print("WARNING. Inaccurate derivative calculated.")   
+    return
+
 def cost_gradient(t, y, x, h_l, o_l, l):
 
-    cost = np.sum(np.multiply(t, np.log(y)))
-    cost -= l/2*np.sum(np.square(o_l.w))
-    for k in range(0, len(h_l)):
-        cost -= l/2*np.sum(np.square(h_l[k].w))
+    weights = [h_l[k].w for k in range(0, len(h_l))]
+    weights.append(o_l.w)
+    cost = cost_func(t, y, weights, l)
 
     gradient_hidden_layers = []
 
     back = t-y
     gradient_output_layer = o_l.back_propagation(back) - l*o_l.w
     back = np.dot(back, o_l.w)
-    gradient_hidden_layers.append(h_l[-1].back_propagation(back))
+    gradient_hidden_layers.append(h_l[-1].back_propagation(back) - l*h_l[-1].w)
     for k in range(len(h_l)-2,-1,-1):
         back = h_l[k+1].crop(back)
         back = np.dot(back, h_l[k+1].w)
-        gradient_hidden_layers.append(h_l[k].back_propagation(back))
+        gradient_hidden_layers.append(h_l[k].back_propagation(back) - l*h_l[k].w)
+
     # reoreder from end to start
     reorder = [k for k in range(len(h_l)-1,-1,-1)]
     gradient_hidden_layers = [gradient_hidden_layers[i] for i in reorder]
-
+    
+    check_gradient(t,x, h_l, o_l, l, gradient_hidden_layers, gradient_output_layer)
     return cost, gradient_hidden_layers, gradient_output_layer
