@@ -32,9 +32,8 @@ for i in range(0, len(data_list)):
                 model.compile([0.0001,0.00001], [0.00001])
                 model.fit(data_list[i][0], data_list[i][1], batch_size=nb, epochs=50, validation_split=0.2, report=diagram_files[i])
                 y_test_predictions = model.predict(data_list[i][2])
-                test_error.append(model.score(y_test_predictions, data_list[i][3]))
+                y_test_score = model.score(y_test_predictions, data_list[i][3])
+                print("Error = "+str(y_test_score)+" for test set. Model chose learning rate = "+str(model.learning_rate_best)+" , lambda = "+str(model.lam_best))
 
-for i in range(0,len(test_error)):
-    print('Test '+str(i)+' error='+str(test_error[i])+'.')
 
 print('Time for the whole process was '+str(int((time.time()-start)/60))+' mins.')
