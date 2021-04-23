@@ -35,7 +35,7 @@ _Random diagrams_
 ![diagram30](../diagrams/mnist/diagram30.png)
 
 2. CIFAR-10  
-For _CIFAR-10_ data, the outcome was quite frustrating. The one hidden layer models' predictions in validation set -and even in training set- had 50% ~ 60% error. This makes sense as this classification problem is quite more difficult comparing to _MNIST_. The model is too simple and the data may be few to get a better approach in this task. As _MNIST_, the only parameter which seems to change the result is the `learning rate` value, where higher values (~0.0001) seems to act better that lower ones (~1e-05). 
+For _CIFAR-10_ data, the outcome was quite frustrating. The one hidden layer models' predictions in validation set -and even in training set- had 50% ~ 60% error. This makes sense as this classification problem is quite more difficult comparing to _MNIST_. The model is too simple and the data may be few to get a better approach in this task. As _MNIST_, the only parameter which seems to change the result is the `learning rate` value, where higher values (~0.0001) seems to act better than lower ones (~1e-05). 
 
 _Random diagrams_  
 ![diagram1](../diagrams/cifar-10/diagram1.png)
